@@ -10,6 +10,9 @@ export let isUsingMicroTask = false
 const callbacks = []
 let pending = false
 
+/**
+ * 下一个tick执行回调函数
+ */
 function flushCallbacks () {
   pending = false
   const copies = callbacks.slice(0)
@@ -30,7 +33,7 @@ function flushCallbacks () {
 // where microtasks have too high a priority and fire in between supposedly
 // sequential events (e.g. #4521, #6690, which have workarounds)
 // or even between bubbling of the same event (#6566).
-let timerFunc
+let timerFunc // 获取当前环境中的timerFunc
 
 // The nextTick behavior leverages the microtask queue, which can be accessed
 // via either native Promise.then or MutationObserver.
@@ -84,6 +87,12 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
 }
 
+/**
+ *
+ * @param {*} cb
+ * @param {*} ctx
+ * @returns {Promise} Promise
+ */
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
   callbacks.push(() => {

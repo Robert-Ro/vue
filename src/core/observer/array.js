@@ -28,6 +28,7 @@ methodsToPatch.forEach(function (method) {
     const result = original.apply(this, args)
     const ob = this.__ob__
     let inserted
+    // 对能增加数组长度进行单独判断
     switch (method) {
       case 'push':
       case 'unshift':
@@ -37,7 +38,7 @@ methodsToPatch.forEach(function (method) {
         inserted = args.slice(2)
         break
     }
-    if (inserted) ob.observeArray(inserted)
+    if (inserted) ob.observeArray(inserted) // 把新添加的值变成一个响应式对象
     // notify change
     ob.dep.notify()
     return result

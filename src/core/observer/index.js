@@ -32,7 +32,7 @@ export function toggleObserving (value: boolean) {
  * Observer class that is attached to each observed
  * object. Once attached, the observer converts the target
  * object's property keys into getter/setters that
- * collect dependencies and dispatch updates.
+ * collect dependencies and dispatch updates. 收集依赖/分发更新
  */
 export class Observer {
   value: any;
@@ -46,7 +46,8 @@ export class Observer {
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
-        protoAugment(value, arrayMethods)
+        // const hasProto = '__proto__' in {};
+        protoAugment(value, arrayMethods);
       } else {
         copyAugment(value, arrayMethods, arrayKeys)
       }
@@ -103,7 +104,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
 }
 
 /**
- * Attempt to create an observer instance for a value,
+ * Attempt to create an observer instance for a value, 为值添加一个观察者实例
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
@@ -131,6 +132,12 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * @param {*} obj
+ * @param {*} key
+ * @param {*} val
+ * @param {*} customSetter
+ * @param {*} shallow 浅处理
+ * @returns
  */
 export function defineReactive (
   obj: Object,
@@ -149,11 +156,12 @@ export function defineReactive (
   // cater for pre-defined getter/setters
   const getter = property && property.get
   const setter = property && property.set
+  // 处理val取值问题
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
 
-  let childOb = !shallow && observe(val)
+  let childOb = !shallow && observe(val) // 子Observe对象
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -194,44 +202,57 @@ export function defineReactive (
 }
 
 /**
- * Set a property on an object. Adds the new property and
+ * Set a property on an object对象动态添加属性并对属性进行响应式化. Adds the new property and
  * triggers change notification if the property doesn't
  * already exist.
+ * @param {Array<any> | Object} target 数组或普通对象
+ * @param {any} key 数组的下标或者对象的key
+ * @param {any} val 需要添加的值
  */
 export function set (target: Array<any> | Object, key: any, val: any): any {
-  if (process.env.NODE_ENV !== 'production' &&
+  if (
+    process.env.NODE_ENV !== "production" &&
     (isUndef(target) || isPrimitive(target))
   ) {
-    warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
+    warn(
+      `Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`
+    );
   }
+  // 处理数组且下标合法
   if (Array.isArray(target) && isValidArrayIndex(key)) {
-    target.length = Math.max(target.length, key)
-    target.splice(key, 1, val)
-    return val
+    target.length = Math.max(target.length, key);
+    target.splice(key, 1, val);
+    return val; // 直接返回
   }
+  // 属性存在于target中
   if (key in target && !(key in Object.prototype)) {
-    target[key] = val
-    return val
+    target[key] = val;
+    return val; // 直接返回
   }
-  const ob = (target: any).__ob__
+  // 判断target是否是一个Observer的实例
+  const ob = (target: any).__ob__;
   if (target._isVue || (ob && ob.vmCount)) {
-    process.env.NODE_ENV !== 'production' && warn(
-      'Avoid adding reactive properties to a Vue instance or its root $data ' +
-      'at runtime - declare it upfront in the data option.'
-    )
-    return val
+    process.env.NODE_ENV !== "production" &&
+      warn(
+        "Avoid adding reactive properties to a Vue instance or its root $data " +
+          "at runtime - declare it upfront in the data option."
+      );
+    return val;
   }
   if (!ob) {
-    target[key] = val
-    return val
+    // target不是一个响应式的对象，则直接赋值并返回
+    target[key] = val;
+    return val;
   }
-  defineReactive(ob.value, key, val)
-  ob.dep.notify()
-  return val
+  // 把新添加的属性变成响应式对象
+  defineReactive(ob.value, key, val);
+  ob.dep.notify(); // 触发依赖通知
+  return val;
 }
 
 /**
  * Delete a property and trigger change if necessary.
+ * 删除属性并触发变化
  */
 export function del (target: Array<any> | Object, key: any) {
   if (process.env.NODE_ENV !== 'production' &&
@@ -239,10 +260,12 @@ export function del (target: Array<any> | Object, key: any) {
   ) {
     warn(`Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+  // 如果是数组，走数组的响应式操作
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.splice(key, 1)
     return
   }
+  // Vue实例则不处理
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -251,10 +274,13 @@ export function del (target: Array<any> | Object, key: any) {
     )
     return
   }
+  // 不含该键值不处理
   if (!hasOwn(target, key)) {
     return
   }
+  // 调用delete方法删除属性
   delete target[key]
+  // 如果是响应式对象则触发对应的更新，否则不作处理
   if (!ob) {
     return
   }

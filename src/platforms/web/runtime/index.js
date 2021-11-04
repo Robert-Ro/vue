@@ -34,6 +34,12 @@ extend(Vue.options.components, platformComponents)
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+/**
+ * 被runtime only版本的Vue直接使用
+ * @param {*} el
+ * @param {*} hydrating
+ * @returns
+ */
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean

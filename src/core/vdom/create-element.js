@@ -25,6 +25,16 @@ const ALWAYS_NORMALIZE = 2
 
 // wrapper function for providing a more flexible interface
 // without getting yelled at by flow
+/**
+ * NOTE 创建VNode
+ * @param {*} context
+ * @param {*} tag
+ * @param {*} data
+ * @param {*} children
+ * @param {*} normalizationType
+ * @param {*} alwaysNormalize
+ * @returns
+ */
 export function createElement (
   context: Component,
   tag: any,
@@ -43,7 +53,15 @@ export function createElement (
   }
   return _createElement(context, tag, data, children, normalizationType)
 }
-
+/**
+ * 实际的创建VNode
+ * @param {*} context
+ * @param {*} tag
+ * @param {*} data
+ * @param {*} children
+ * @param {*} normalizationType
+ * @returns
+ */
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -87,6 +105,7 @@ export function _createElement (
     data.scopedSlots = { default: children[0] }
     children.length = 0
   }
+  //规范化子节点的类型
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
@@ -112,7 +131,7 @@ export function _createElement (
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
-      // unknown or unlisted namespaced elements
+      // unknown or unlisted namespaced elements 未知的tag=>创建未知的组件
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
       vnode = new VNode(

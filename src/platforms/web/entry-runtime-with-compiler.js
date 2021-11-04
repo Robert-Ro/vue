@@ -8,13 +8,19 @@ import Vue from './runtime/index'
 import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
-
+// 借助闭包实现的缓存
 const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
 
 const mount = Vue.prototype.$mount
+/**
+ * web渲染挂载
+ * @param {string | Element} el 挂载节点
+ * @param {boolean} hydrating 是否注水
+ * @returns
+ */
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
@@ -23,14 +29,15 @@ Vue.prototype.$mount = function (
 
   /* istanbul ignore if */
   if (el === document.body || el === document.documentElement) {
+    // 挂载节点判断
     process.env.NODE_ENV !== 'production' && warn(
       `Do not mount Vue to <html> or <body> - mount to normal elements instead.`
     )
     return this
   }
-
+  // 初始化时传入的配置信息
   const options = this.$options
-  // resolve template/el and convert to render function
+  // resolve template/el and convert to render function 不存在render函数则解析模板转化为渲染函数
   if (!options.render) {
     let template = options.template
     if (template) {
@@ -58,24 +65,28 @@ Vue.prototype.$mount = function (
     }
     if (template) {
       /* istanbul ignore if */
-      if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-        mark('compile')
+      if (process.env.NODE_ENV !== "production" && config.performance && mark) {
+        mark("compile");
       }
-
-      const { render, staticRenderFns } = compileToFunctions(template, {
-        outputSourceRange: process.env.NODE_ENV !== 'production',
-        shouldDecodeNewlines,
-        shouldDecodeNewlinesForHref,
-        delimiters: options.delimiters,
-        comments: options.comments
-      }, this)
-      options.render = render
-      options.staticRenderFns = staticRenderFns
+      // NOTE 调用compileToFunctions实现解析模板生成render函数
+      const { render, staticRenderFns } = compileToFunctions(
+        template,
+        {
+          outputSourceRange: process.env.NODE_ENV !== "production",
+          shouldDecodeNewlines,
+          shouldDecodeNewlinesForHref,
+          delimiters: options.delimiters,
+          comments: options.comments,
+        },
+        this
+      );
+      options.render = render;
+      options.staticRenderFns = staticRenderFns;
 
       /* istanbul ignore if */
-      if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-        mark('compile end')
-        measure(`vue ${this._name} compile`, 'compile', 'compile end')
+      if (process.env.NODE_ENV !== "production" && config.performance && mark) {
+        mark("compile end");
+        measure(`vue ${this._name} compile`, "compile", "compile end");
       }
     }
   }

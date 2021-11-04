@@ -1,7 +1,12 @@
 /* @flow */
 
 import { namespaceMap } from 'web/util/index'
-
+/**
+ * 创建真实的DOM
+ * @param {*} tagName
+ * @param {*} vnode
+ * @returns
+ */
 export function createElement (tagName: string, vnode: VNode): Element {
   const elm = document.createElement(tagName)
   if (tagName !== 'select') {

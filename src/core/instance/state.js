@@ -58,15 +58,21 @@ export function initState (vm: Component) {
   }
   if (opts.computed) initComputed(vm, opts.computed)
   if (opts.watch && opts.watch !== nativeWatch) {
-    initWatch(vm, opts.watch)
+    // nativeWatch: ({}).watch Firefox has a "watch" function on Object.prototype
+    initWatch(vm, opts.watch);
   }
 }
-
+/**
+ * 初始化属性
+ * @param {*} vm
+ * @param {*} propsOptions 属性配置
+ */
 function initProps (vm: Component, propsOptions: Object) {
+  // 传进来的属性,若是Object类型，则已经添加了对应的观察者
   const propsData = vm.$options.propsData || {}
   const props = vm._props = {}
   // cache prop keys so that future props updates can iterate using Array
-  // instead of dynamic object key enumeration.
+  // instead of dynamic object key enumeration.缓存属性键值
   const keys = vm.$options._propKeys = []
   const isRoot = !vm.$parent
   // root instance props should be converted
@@ -75,6 +81,7 @@ function initProps (vm: Component, propsOptions: Object) {
   }
   for (const key in propsOptions) {
     keys.push(key)
+    // 校验属性类型、值是否满足要求
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
@@ -86,6 +93,7 @@ function initProps (vm: Component, propsOptions: Object) {
           vm
         )
       }
+      // 设置响应式
       defineReactive(props, key, value, () => {
         if (!isRoot && !isUpdatingChildComponent) {
           warn(
@@ -109,7 +117,10 @@ function initProps (vm: Component, propsOptions: Object) {
   }
   toggleObserving(true)
 }
-
+/**
+ * 初始化data
+ * @param {*} vm
+ */
 function initData (vm: Component) {
   let data = vm.$options.data
   data = vm._data = typeof data === 'function'
@@ -127,9 +138,10 @@ function initData (vm: Component) {
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
-  let i = keys.length
-  while (i--) {
-    const key = keys[i]
+  let keyLength = keys.length
+  while (keyLength--) {
+    const key = keys[keyLength]
+    // data里面的属性名不能与methods和props里面的一样
     if (process.env.NODE_ENV !== 'production') {
       if (methods && hasOwn(methods, key)) {
         warn(
@@ -144,7 +156,7 @@ function initData (vm: Component) {
         `Use prop default value instead.`,
         vm
       )
-    } else if (!isReserved(key)) {
+    } else if (!isReserved(key)) { // 不能为$或者_
       proxy(vm, `_data`, key)
     }
   }
@@ -167,49 +179,67 @@ export function getData (data: Function, vm: Component): any {
 
 const computedWatcherOptions = { lazy: true }
 
+/**
+ * 初始化计算属性
+ * @param {*} vm
+ * @param {*} computed
+ */
 function initComputed (vm: Component, computed: Object) {
   // $flow-disable-line
-  const watchers = vm._computedWatchers = Object.create(null)
+  const watchers = (vm._computedWatchers = Object.create(null)); // 创建_computedWatchers空对象
   // computed properties are just getters during SSR
-  const isSSR = isServerRendering()
+  const isSSR = isServerRendering();
 
   for (const key in computed) {
-    const userDef = computed[key]
-    const getter = typeof userDef === 'function' ? userDef : userDef.get
-    if (process.env.NODE_ENV !== 'production' && getter == null) {
-      warn(
-        `Getter is missing for computed property "${key}".`,
-        vm
-      )
+    // 对option中的计算属性进行遍历
+    const userDef = computed[key];
+    const getter = typeof userDef === "function" ? userDef : userDef.get; // 判断两种写法，尝试获取userDef对应的getter
+    if (process.env.NODE_ENV !== "production" && getter == null) {
+      warn(`Getter is missing for computed property "${key}".`, vm);
     }
 
     if (!isSSR) {
-      // create internal watcher for the computed property.
+      // create internal watcher for the computed property. 为每一个getter创建一个computed watcher，与渲染watcher不一样
       watchers[key] = new Watcher(
         vm,
         getter || noop,
         noop,
         computedWatcherOptions
-      )
+      );
     }
 
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    // 如果 key 不是 vm 的属性
     if (!(key in vm)) {
-      defineComputed(vm, key, userDef)
-    } else if (process.env.NODE_ENV !== 'production') {
+      defineComputed(vm, key, userDef);
+    } else if (process.env.NODE_ENV !== "production") {
+      // 判断计算属性对于的 key 是否已经被 data 或者 prop 所占用
       if (key in vm.$data) {
-        warn(`The computed property "${key}" is already defined in data.`, vm)
+        warn(`The computed property "${key}" is already defined in data.`, vm);
       } else if (vm.$options.props && key in vm.$options.props) {
-        warn(`The computed property "${key}" is already defined as a prop.`, vm)
+        warn(
+          `The computed property "${key}" is already defined as a prop.`,
+          vm
+        );
       } else if (vm.$options.methods && key in vm.$options.methods) {
-        warn(`The computed property "${key}" is already defined as a method.`, vm)
+        warn(
+          `The computed property "${key}" is already defined as a method.`,
+          vm
+        );
       }
     }
   }
 }
-
+/**
+ * 定义计算属性
+ * 利用Object.defineProperty 给计算属性对应的 key 值添加 getter 和 setter
+ * 在平时的开发场景中，计算属性有 setter 的情况比较少
+ * @param {*} target
+ * @param {*} key
+ * @param {*} userDef
+ */
 export function defineComputed (
   target: any,
   key: string,
@@ -240,10 +270,14 @@ export function defineComputed (
   }
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
-
+/**
+ * 创建计算属性的Getter
+ * @param {*} key
+ * @returns 计算属性对应的getter
+ */
 function createComputedGetter (key) {
   return function computedGetter () {
-    const watcher = this._computedWatchers && this._computedWatchers[key]
+    const watcher = this._computedWatchers && this._computedWatchers[key] // 取出对应getter的watcher
     if (watcher) {
       if (watcher.dirty) {
         watcher.evaluate()
@@ -289,11 +323,15 @@ function initMethods (vm: Component, methods: Object) {
     vm[key] = typeof methods[key] !== 'function' ? noop : bind(methods[key], vm)
   }
 }
-
+/**
+ * 初始化Watch
+ * @param {*} vm
+ * @param {*} watch
+ */
 function initWatch (vm: Component, watch: Object) {
   for (const key in watch) {
     const handler = watch[key]
-    if (Array.isArray(handler)) {
+    if (Array.isArray(handler)) { // 多个handler
       for (let i = 0; i < handler.length; i++) {
         createWatcher(vm, key, handler[i])
       }
@@ -302,14 +340,21 @@ function initWatch (vm: Component, watch: Object) {
     }
   }
 }
-
+/**
+ * 创建Watcher
+ * @param {*} vm
+ * @param {*} expOrFn
+ * @param {*} handler
+ * @param {*} options
+ * @returns
+ */
 function createWatcher (
   vm: Component,
   expOrFn: string | Function,
   handler: any,
   options?: Object
 ) {
-  if (isPlainObject(handler)) {
+  if (isPlainObject(handler)) { //调用方式 { handler:'xx', immediate: true }
     options = handler
     handler = handler.handler
   }
@@ -318,7 +363,10 @@ function createWatcher (
   }
   return vm.$watch(expOrFn, handler, options)
 }
-
+/**
+ *
+ * @param {*} Vue
+ */
 export function stateMixin (Vue: Class<Component>) {
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
@@ -344,7 +392,13 @@ export function stateMixin (Vue: Class<Component>) {
 
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
-
+  /**
+   * watch函数定义
+   * @param {*} expOrFn
+   * @param {*} cb
+   * @param {*} options
+   * @returns
+   */
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,

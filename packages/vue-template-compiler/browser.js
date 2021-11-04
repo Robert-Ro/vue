@@ -1065,8 +1065,17 @@
   // can be evaluated at a time.
   Dep.target = null;
 
-  /*  */
-
+  /**
+   * VNode构造函数
+   * @param {*} tag
+   * @param {*} data
+   * @param {*} children
+   * @param {*} text
+   * @param {*} elm
+   * @param {*} context
+   * @param {*} componentOptions
+   * @param {*} asyncFactory
+   */
   var VNode = function VNode (
     tag,
     data,

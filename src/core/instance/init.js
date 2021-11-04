@@ -13,6 +13,10 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 let uid = 0
 
 export function initMixin (Vue: Class<Component>) {
+  /**
+   * 初始化入口
+   * @param {*} options
+   */
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
@@ -43,7 +47,7 @@ export function initMixin (Vue: Class<Component>) {
     }
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
-      initProxy(vm)
+      initProxy(vm) // 若支持proxy则使用proxy
     } else {
       vm._renderProxy = vm
     }
@@ -90,6 +94,11 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   }
 }
 
+/**
+ * 解析构造函数 NOTE ?
+ * @param {*} Ctor
+ * @returns
+ */
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   let options = Ctor.options
   if (Ctor.super) {

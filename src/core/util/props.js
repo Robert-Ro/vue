@@ -10,14 +10,23 @@ import {
   capitalize,
   isPlainObject
 } from 'shared/util'
-
+/**
+ * 属性类型
+ */
 type PropOptions = {
   type: Function | Array<Function> | null,
   default: any,
   required: ?boolean,
   validator: ?Function
 };
-
+/**
+ * 校验属性
+ * @param {*} key
+ * @param {*} propOptions
+ * @param {*} propsData
+ * @param {*} vm
+ * @returns
+ */
 export function validateProp (
   key: string,
   propOptions: Object,

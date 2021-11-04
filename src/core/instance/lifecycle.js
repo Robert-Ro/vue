@@ -28,7 +28,10 @@ export function setActiveInstance(vm: Component) {
     activeInstance = prevActiveInstance
   }
 }
-
+/**
+ * 初始化生命周期
+ * @param {*} vm
+ */
 export function initLifecycle (vm: Component) {
   const options = vm.$options
 
@@ -65,10 +68,10 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {
-      // initial render
+      // initial render初次渲染
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
-      // updates
+      // updates更新，DOM diff?
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -137,7 +140,13 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 }
-
+/**
+ * 挂载组件
+ * @param {*} vm
+ * @param {*} el
+ * @param {*} hydrating
+ * @returns
+ */
 export function mountComponent (
   vm: Component,
   el: ?Element,
@@ -205,9 +214,9 @@ export function mountComponent (
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
-  if (vm.$vnode == null) {
-    vm._isMounted = true
-    callHook(vm, 'mounted')
+  if (vm.$vnode == null) { // 父节点为空，表示该节点为根节点
+    vm._isMounted = true; // 实例已经挂载了
+    callHook(vm, "mounted"); //调用`mounted`钩子函数
   }
   return vm
 }
@@ -333,7 +342,11 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
     callHook(vm, 'deactivated')
   }
 }
-
+/**
+ * 调用钩子函数
+ * @param {*} vm
+ * @param {*} hook
+ */
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
